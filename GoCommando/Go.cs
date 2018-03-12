@@ -168,7 +168,15 @@ to get help for a command.
 {availableCommands}");
             }
 
-            var appSettings = ConfigurationManager.AppSettings.AllKeys
+            IDictionary<string, string> appSettings=null;
+            IDictionary<string, string> connectionStrings =null;
+
+            var environmentVariables = Environment.GetEnvironmentVariables()
+                .Cast<DictionaryEntry>()
+                .ToDictionary(a => (string)a.Key, a => (string)a.Value);
+
+#if NETFX
+            appSettings = ConfigurationManager.AppSettings.AllKeys
                 .Select(key => new
                 {
                     Key = key,
@@ -176,15 +184,10 @@ to get help for a command.
                 })
                 .ToDictionary(a => a.Key, a => a.Value);
 
-            var connectionStrings = ConfigurationManager.ConnectionStrings.Cast<ConnectionStringSettings>()
-                .ToDictionary(a => a.Name, a => a.ConnectionString);
-
-            var environmentVariables = Environment.GetEnvironmentVariables()
-                .Cast<DictionaryEntry>()
-                .ToDictionary(a => (string)a.Key, a => (string)a.Value);
-
+            connectionStrings = ConfigurationManager.ConnectionStrings.Cast<ConnectionStringSettings>()
+                .ToDictionary(a => a.Name, a => a.ConnectionString);      
+#endif
             var environmentSettings = new EnvironmentSettings(appSettings, connectionStrings, environmentVariables);
-
             commandToRun.Invoke(arguments.Switches, environmentSettings);
         }
 

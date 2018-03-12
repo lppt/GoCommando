@@ -2,30 +2,30 @@
 using System.Collections.Generic;
 using System.Linq;
 using GoCommando.Internals;
-using NUnit.Framework;
+using Xunit;
 
 namespace GoCommando.Tests
 {
-    [TestFixture]
     public class TestArgParser
     {
-        [Test]
+        [Fact]
         public void CanReturnSimpleCommand()
         {
             var arguments = Parse(new[] { "run" });
 
-            Assert.That(arguments.Command, Is.EqualTo("run"));
+            Assert.Equal("run", arguments.Command);
         }
 
-        [Test]
+        [Fact]
         public void CommandIsNullWhenNoCommandIsGiven()
         {
             var arguments = Parse(new[] { "-file", @"""C:\temp\file.json""" });
 
-            Assert.That(arguments.Command, Is.Null);
+            Assert.Null(arguments.Command);
         }
 
-        [Test, Ignore("arguments.Command should just be null")]
+        // [Fact, Ignore]
+        //[Test, Ignore("arguments.Command should just be null")]
         public void DoesNotAcceptSwitchAsCommand()
         {
             var ex = Assert.Throws<GoCommandoException>(() =>
@@ -36,7 +36,7 @@ namespace GoCommando.Tests
             Console.WriteLine(ex);
         }
 
-        [Test]
+        [Fact]
         public void CanParseOrdinaryArguments()
         {
             var args = @"run
@@ -45,42 +45,43 @@ c:\Program Files
 -dir
 c:\Windows\Microsoft.NET\Framework
 -flag
--moreflag".Split(new[] { Environment.NewLine }, StringSplitOptions.RemoveEmptyEntries);
+-moreflag".Split(new[] { "\r\n", "\r", "\n", Environment.NewLine }, StringSplitOptions.RemoveEmptyEntries);
 
             var arguments = Parse(args);
 
             Console.WriteLine(arguments);
 
-            Assert.That(arguments.Command, Is.EqualTo("run"));
-            Assert.That(arguments.Switches.Count(), Is.EqualTo(4));
-            Assert.That(arguments.Get<string>("path"), Is.EqualTo(@"c:\Program Files"));
-            Assert.That(arguments.Get<string>("dir"), Is.EqualTo(@"c:\Windows\Microsoft.NET\Framework"));
+            Assert.Equal("run", arguments.Command);
+            Assert.Equal(4, arguments.Switches.Count());
+            Assert.Equal(@"c:\Program Files", arguments.Get<string>("path"));
+            Assert.Equal(@"c:\Windows\Microsoft.NET\Framework", arguments.Get<string>("dir"));
 
-            Assert.That(arguments.Get<bool>("flag"), Is.True);
-            Assert.That(arguments.Get<bool>("moreflag"), Is.True);
-            Assert.That(arguments.Get<bool>("flag_not_specified_should_default_to_false"), Is.False);
+            Assert.True(arguments.Get<bool>("flag"));
+            Assert.True(arguments.Get<bool>("moreflag"));
+            Assert.False(arguments.Get<bool>("flag_not_specified_should_default_to_false"));
         }
 
-        [TestCase(@"-path:""c:\temp""")]
-        [TestCase(@"-path=""c:\temp""")]
-        [TestCase(@"-path""c:\temp""")]
+        [Theory]
+        [InlineData(@"-path:""c:\temp""")]
+        [InlineData(@"-path=""c:\temp""")]
+        [InlineData(@"-path""c:\temp""")]
         public void SupportsVariousSingleTokenAliases(string alias)
         {
             var arguments = Parse(new[] { alias });
 
-            Assert.That(arguments.Switches.Count(), Is.EqualTo(1));
-            Assert.That(arguments.Switches.Single().Key, Is.EqualTo("path"));
-            Assert.That(arguments.Switches.Single().Value, Is.EqualTo(@"c:\temp"));
+            Assert.Equal(1, arguments.Switches.Count());
+            Assert.Equal("path", arguments.Switches.Single().Key);
+            Assert.Equal(@"c:\temp", arguments.Switches.Single().Value);
         }
 
-        [TestCase(@"-n23")]
+        [Theory, InlineData(@"-n23")]
         public void SupportsShortFormWithNumber(string alias)
         {
             var arguments = Parse(new[] { alias });
 
-            Assert.That(arguments.Switches.Count(), Is.EqualTo(1));
-            Assert.That(arguments.Switches.Single().Key, Is.EqualTo("n"));
-            Assert.That(arguments.Switches.Single().Value, Is.EqualTo(@"23"));
+            Assert.Equal(1, arguments.Switches.Count());
+            Assert.Equal("n", arguments.Switches.Single().Key);
+            Assert.Equal(@"23", arguments.Switches.Single().Value);
         }
 
         static Arguments Parse(IEnumerable<string> args)

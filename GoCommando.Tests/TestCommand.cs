@@ -2,16 +2,15 @@
 using System.Collections.Generic;
 using System.Linq;
 using GoCommando.Internals;
-using NUnit.Framework;
+using Xunit;
 
 namespace GoCommando.Tests
 {
-    [TestFixture]
     public class TestCommand
     {
-        [TestCase("-switch:value2")]
-        [TestCase("-switch=value2")]
-        [TestCase(@"-switch""value2""")]
+        [InlineData("-switch:value2")]
+        [InlineData("-switch=value2")]
+        [InlineData(@"-switch""value2""")]
         public void CanCorrectlyHandleDifferentAlternativeSwitchFormatsFoundInOneSingleTokenOnly(string switchText)
         {
             var settings = new Settings();
@@ -22,12 +21,12 @@ namespace GoCommando.Tests
 
             var bimseInstance = (Bimse)invoker.CommandInstance;
 
-            Assert.That(bimseInstance.Switch, Is.EqualTo("value2"));
+            Assert.Equal("value2", bimseInstance.Switch);
         }
-
-        [TestCase("-s:value2")]
-        [TestCase("-s=value2")]
-        [TestCase(@"-s""value2""")]
+        [Theory]
+        [InlineData("-s:value2")]
+        [InlineData("-s=value2")]
+        [InlineData(@"-s""value2""")]
         public void CanCorrectlyHandleDifferentAlternativeSwitchFormatsFoundInOneSingleTokenOnly_Shortname(string switchText)
         {
             var settings = new Settings();
@@ -38,7 +37,7 @@ namespace GoCommando.Tests
 
             var bimseInstance = (Bimse)invoker.CommandInstance;
 
-            Assert.That(bimseInstance.Switch, Is.EqualTo("value2"));
+            Assert.Equal("value2", bimseInstance.Switch);
         }
 
         [Command("bimse")]
@@ -52,7 +51,7 @@ namespace GoCommando.Tests
             }
         }
 
-        [Test]
+        [Fact]
         public void CanUseSuppliedCommandFactory()
         {
             var commandFactory = new CustomFactory();
@@ -61,12 +60,12 @@ namespace GoCommando.Tests
 
             commandInvoker.Invoke(Enumerable.Empty<Switch>(), new EnvironmentSettings());
 
-            Assert.That(commandInvoker.CommandInstance, Is.TypeOf<CreatedByFactory>());
+            Assert.IsType<CreatedByFactory>(commandInvoker.CommandInstance);
 
             var createdByFactory = (CreatedByFactory)commandInvoker.CommandInstance;
-            Assert.That(createdByFactory.CtorInjectedValue, Is.EqualTo("ctor!!"));
+            Assert.Equal("ctor!!", createdByFactory.CtorInjectedValue);
 
-            Assert.That(commandFactory.WasProperlyReleased, Is.True, "The created command instance was NOT properly released after use!");
+            Assert.True(commandFactory.WasProperlyReleased, "The created command instance was NOT properly released after use!");
         }
 
         class CustomFactory : ICommandFactory
@@ -109,7 +108,7 @@ namespace GoCommando.Tests
             }
         }
 
-        [Test]
+        [Fact]
         public void CanGetParameterFromAppSettingsAndConnectionStrings()
         {
             var invoker = new CommandInvoker("null", typeof(CanUseAppSetting), new Settings());
@@ -133,9 +132,9 @@ namespace GoCommando.Tests
 
             var instance = (CanUseAppSetting)invoker.CommandInstance;
 
-            Assert.That(instance.AppSetting, Is.EqualTo("my-value"));
-            Assert.That(instance.ConnectionString, Is.EqualTo("my-value"));
-            Assert.That(instance.EnvironmentVariable, Is.EqualTo("my-value"));
+            Assert.Equal("my-value", instance.AppSetting);
+            Assert.Equal("my-value", instance.ConnectionString);
+            Assert.Equal("my-value", instance.EnvironmentVariable);
         }
 
         class CanUseAppSetting : ICommand
